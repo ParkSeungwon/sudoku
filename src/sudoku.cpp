@@ -10,8 +10,8 @@ using namespace std;
 Cmat<int, 9, 9> m, Q, A;
 int solution = 0;
 
-vector<int> available(int x, int y)
-{//return available numbers at x, y
+vector<int> possible(int x, int y)
+{//return possible numbers at x, y
 	int tmp = m[x][y]; m[x][y] = 0;
 	bool exist[10] = {false, };
 	for(int i=0; i<9; i++) exist[m[i][y]] = true;
@@ -31,7 +31,7 @@ void init()
 	random_device rd;
 	m.O();
 	for(int i=0, n=10; i<9; i++) for(int j=0; j<9; j++) if(!di2(rd)) {//init
-		auto v = available(i, j);
+		auto v = possible(i, j);
 		if(!v.size()) m.O(), i = 0, j = 0;
 		else {
 			while(n > v.size() - 1) n = di1(rd) - 1;
@@ -41,15 +41,15 @@ void init()
 	}
 }
 
-int evident(int x1, int x2, int y1, int y2)
-{//vertical, horizontal delete solve, return 0 : no solve, -1 : wrong, + : solve
-	vector<tuple<int, int,vector<int>>> vv;//x,y,numbers possible
+int evident(int x1, int x2, int y1, int y2)//vertical, horizontal, 3x3 exclusive solve
+{//return 0 : no more possible solve, -1 : not solvable, + : count of solved
+	vector<tuple<int, int,vector<int>>> vv;//x,y,possible numbers 
 	map<int, int> numNfreq;
 	vector<int> vn;//numbers already solved and given
 	int r = 0;
 	for(int i=x1; i<=x2; i++) for(int j=y1; j<=y2; j++) {
 		if(!m[i][j]) {
-			auto v = available(i, j);
+			auto v = possible(i, j);
 			vv.push_back({i, j, v});
 			for(int n : v) numNfreq[n]++;
 		} else vn.push_back(m[i][j]);
@@ -63,31 +63,34 @@ int evident(int x1, int x2, int y1, int y2)
 		if(!numNfreq[i] && find(vn.begin(), vn.end(), i) == vn.end()) r = -1;
 	return r;
 }
-int evident_solve()
-{
-	for(int k=1; k>0;) {
-		k = 0;
+bool evident_solve()
+{//repeat evident solve for every row and column and 3x3, return false if not solvable
+	int filled = 0;
+	do {//filled : count of filled numbers this turn
+		filled = 0;
 		for(int i=0; i<9; i++) for(int j=0; j<9; j++) {
 			if(!m[i][j]) {
-				auto v = available(i, j);
-				if(v.size() == 1) m[i][j] = v[0], k++;
+				auto v = possible(i, j);
+				if(v.empty()) return false;
+				if(v.size() == 1) m[i][j] = v[0], filled++;
 			}
 		}
 		for(int i=0; i<9; i++) {
-			if(int n = evident(i, i, 0, 8); n < 0) return -1;
-			else k += n;
-			if(int n = evident(0, 8, i, i); n < 0) return -1;
-			else k += n;
+			if(int n = evident(i, i, 0, 8); n < 0) return false;
+			else filled += n;
+			if(int n = evident(0, 8, i, i); n < 0) return false;
+			else filled += n;
 		}
 		for(int p=0; p<9; p+=3) for(int q=0; q<9; q+=3)
-			if(int n = evident(p, p + 2, q, q + 2); n < 0) return -1;
-			else k += n;
-	}
+			if(int n = evident(p, p + 2, q, q + 2); n < 0) return false;
+			else filled += n;
+	} while(filled > 0);
+	return true;
 }
 
 void recur(int x, int y)
-{//recursive solve sudoku
-	if(solution > 1) return;//abort
+{//recursively solve sudoku, brute force
+	if(solution > 1) return;//abort if more than 2 Answer is possible
 	if(x == 9) {//recalculate x,y border
 		if(y == 8) {
 			solution++;
@@ -97,7 +100,7 @@ void recur(int x, int y)
 	}
 	if(m[x][y]) recur(x + 1, y);
 	else {
-		for(int i : available(x, y)) {
+		for(int i : possible(x, y)) {
 			m[x][y] = i;
 			recur(x + 1, y);
 		}
@@ -106,20 +109,19 @@ void recur(int x, int y)
 }
 
 int main(int ac, char **av)
-{
-//	asm("movq $60, %rax");
+{//generate sudoku problem and solve it.
 	for(int k = 1, not_solved=0; solution != 1; k++, not_solved=0) {
-		init();
-		solution = 0;
-		Q = m; 
-		cout << "trying " << k << endl << Q << flush;
-		if(evident_solve() < 0) continue;
-		cout << "evident" << endl << m << flush;
+		init(); solution = 0; Q = m; 
+		cout << "trying " << k << '\n' << Q;
+
+		if(!evident_solve()) continue;
+		cout << "evident" << '\n' << m;
 		for(int i=0; i<9; i++) for(int j=0; j<9; j++) if(!m[i][j]) not_solved++;
-		if(not_solved > 27) continue;
+		if(not_solved > 50) continue;//take too much time for brute force
+		
 		recur(0, 0);//brute force
-		cout << "solution " << solution << endl;
+		cout << "solution " << solution << '\n';
 	}
-	cout << A << endl;
+	cout << A;
 }
 
