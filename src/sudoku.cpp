@@ -26,13 +26,13 @@ vector<int> possible(int x, int y)
 }
 
 void init() 
-{
+{//distribute numbers on board randomly
 	uniform_int_distribution<int> di1{1, 9}, di2{0, 2};
 	random_device rd;
 	m.O();
 	for(int i=0, n=10; i<9; i++) for(int j=0; j<9; j++) if(!di2(rd)) {//init
 		auto v = possible(i, j);
-		if(!v.size()) m.O(), i = 0, j = 0;
+		if(!v.size()) m.O(), i = 0, j = 0;//same as restarting
 		else {
 			while(n > v.size() - 1) n = di1(rd) - 1;
 			m[i][j] = v[n];
@@ -65,8 +65,8 @@ int evident(int x1, int x2, int y1, int y2)//vertical, horizontal, 3x3 exclusive
 }
 bool evident_solve()
 {//repeat evident solve for every row and column and 3x3, return false if not solvable
-	int filled = 0;
-	do {//filled : count of filled numbers this turn
+	int filled = 0;//filled : count of filled numbers this turn
+	do {
 		filled = 0;
 		for(int i=0; i<9; i++) for(int j=0; j<9; j++) {
 			if(!m[i][j]) {
@@ -81,8 +81,8 @@ bool evident_solve()
 			if(int n = evident(0, 8, i, i); n < 0) return false;
 			else filled += n;
 		}
-		for(int p=0; p<9; p+=3) for(int q=0; q<9; q+=3)
-			if(int n = evident(p, p + 2, q, q + 2); n < 0) return false;
+		for(int i=0; i<9; i+=3) for(int j=0; j<9; j+=3)
+			if(int n = evident(i, i + 2, j, j + 2); n < 0) return false;
 			else filled += n;
 	} while(filled > 0);
 	return true;
@@ -108,11 +108,42 @@ void recur(int x, int y)
 	}
 }
 
+bool toggle_chinese = false;
+void print_sudoku(int x, int y)
+{//x, y is current cursor position
+	const char *unicode[] = {"\u2460","\u2461","\u2462","\u2463","\u2464",
+		"\u2465","\u2466","\u2467","\u2468","\u2469"};
+	const char *chinese[] = {"\u4e00", "\u4e8c", "\u4e09", "\u56db", "\u4e94",
+		"\u516d", "\u4e03", "\u516b", "\u4e5d", "\u5341"};
+	const char *chinese_circled[] = {"\u3280", "\u3281", "\u3282", "\u3283", "\u3284",
+		"\u3285", "\u3286", "\u3287", "\u3288", "\u3289"}; 
+	for(int i=0; i<40; i++) cout << '\n';
+	for(int j=0; j<9; j++) {
+		if(j == 3 || j == 6) cout << "\n---+---+---";
+		cout << '\n';
+		for(int i=0; i<9; i++) {
+			if(i == 3 || i == 6) cout << '|';
+			if(!m[i][j]) {
+				if(i == x && j == y) cout << "\u25ef";
+				else cout << ' ';
+			} else if(i == x && j == y) {
+				if(!toggle_chinese) cout << unicode[m[i][j] - 1];
+				else cout << chinese_circled[m[i][j] - 1];
+			} else {
+				if(!toggle_chinese) cout << m[i][j];
+				else cout << chinese[m[i][j] - 1];
+			}
+		}
+	}
+	cout << "\nhjkl to move, d to delete,\n"
+		"c to toggle chinese, q to quit, m to match. enter?";
+}
+
 int main(int ac, char **av)
 {//generate sudoku problem and solve it.
-	for(int k = 1, not_solved=0; solution != 1; k++, not_solved=0) {
+	for(int tries=1, not_solved=0; solution != 1; tries++, not_solved=0) {
 		init(); solution = 0; Q = m; 
-		cout << "trying " << k << '\n' << Q;
+		cout << "trying " << tries << '\n' << Q;
 
 		if(!evident_solve()) continue;
 		cout << "evident" << '\n' << m;
@@ -123,5 +154,21 @@ int main(int ac, char **av)
 		cout << "solution " << solution << '\n';
 	}
 	cout << A;
+	
+	int x = 0, y = 0;
+	m = Q;
+	for(char c=' '; c != 'q'; cin >> c) {
+		switch(c) {
+			case 'h': if(x) x--; break;
+			case 'k': if(y) y--; break;
+			case 'j': if(y != 8) y++; break;
+			case 'l': if(x != 8) x++; break;
+			case 'd': if(!Q[x][y]) m[x][y] = 0; break;
+			case 'c': toggle_chinese = !toggle_chinese; break;
+			case 'm': if(m == A) { cout << "You solved!!" << endl; return 0; }
+		}
+		if(c >= '1' && c <= '9' && !Q[x][y]) m[x][y] = c - '0';
+		print_sudoku(x, y);
+	}
 }
 
