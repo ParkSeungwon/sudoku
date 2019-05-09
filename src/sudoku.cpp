@@ -7,7 +7,7 @@
 #include"base.h"
 using namespace std;
 
-Cmat<int, 9, 9> m, Q, A;
+Cmat<int, 9, 9> m, Q, A, toggle;
 int solution = 0;
 
 vector<int> possible(int x, int y)
@@ -108,15 +108,15 @@ void recur(int x, int y)
 	}
 }
 
-bool toggle_chinese = false;
+bool toggle_num_shape = false;
 void print_sudoku(int x, int y)
 {//x, y is current cursor position
-	const char *unicode[] = {"\u2460","\u2461","\u2462","\u2463","\u2464",
-		"\u2465","\u2466","\u2467","\u2468","\u2469"};
-	const char *chinese[] = {"\u4e00", "\u4e8c", "\u4e09", "\u56db", "\u4e94",
-		"\u516d", "\u4e03", "\u516b", "\u4e5d", "\u5341"};
-	const char *chinese_circled[] = {"\u3280", "\u3281", "\u3282", "\u3283", "\u3284",
-		"\u3285", "\u3286", "\u3287", "\u3288", "\u3289"}; 
+	const char *unicode[] = {"\u2780","\u2781","\u2782","\u2783","\u2784",
+		"\u2785","\u2786","\u2787","\u2788","\u2789"};
+	const char *black_circle2[] = {"\u2776", "\u2777", "\u2778", "\u2779", "\u277a",
+		"\u277b", "\u277c", "\u277d", "\u277e", "\u277f"};
+	const char *black_circle[] = {"\u278a", "\u278b", "\u278c", "\u278d", "\u278e",
+		"\u278f", "\u2790", "\u2791", "\u2792", "\u2793"}; 
 	for(int i=0; i<40; i++) cout << '\n';
 	for(int j=0; j<9; j++) {
 		if(j == 3 || j == 6) cout << "\n---+---+---";
@@ -127,11 +127,11 @@ void print_sudoku(int x, int y)
 				if(i == x && j == y) cout << "\u25ef";
 				else cout << ' ';
 			} else if(i == x && j == y) {
-				if(!toggle_chinese) cout << unicode[m[i][j] - 1];
-				else cout << chinese_circled[m[i][j] - 1];
+				if(!toggle[i][j]) cout << unicode[m[i][j] - 1];
+				else cout << unicode[m[i][j] - 1];
 			} else {
-				if(!toggle_chinese) cout << m[i][j];
-				else cout << chinese[m[i][j] - 1];
+				if(!toggle[i][j]) cout << m[i][j];
+				else cout << black_circle[m[i][j] - 1];
 			}
 		}
 	}
@@ -164,10 +164,11 @@ int main(int ac, char **av)
 			case 'j': if(y != 8) y++; break;
 			case 'l': if(x != 8) x++; break;
 			case 'd': if(!Q[x][y]) m[x][y] = 0; break;
-			case 'c': toggle_chinese = !toggle_chinese; break;
+			case 'c': toggle_num_shape = !toggle_num_shape; break;
 			case 'm': if(m == A) { cout << "You solved!!" << endl; return 0; }
 		}
-		if(c >= '1' && c <= '9' && !Q[x][y]) m[x][y] = c - '0';
+		if(c >= '1' && c <= '9' && !Q[x][y])  
+			toggle[x][y] = toggle_num_shape, m[x][y] = c - '0';
 		print_sudoku(x, y);
 	}
 }
