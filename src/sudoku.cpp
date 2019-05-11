@@ -4,8 +4,10 @@
 #include<iostream>
 #include<map>
 #include<vector>
+#include<opencv2/opencv.hpp>
 #include"base.h"
 using namespace std;
+using namespace cv;
 
 Cmat<int, 9, 9> m, Q, A, toggle;
 int solution = 0;
@@ -139,6 +141,23 @@ void print_sudoku(int x, int y)
 		"c to toggle chinese, q to quit, m to match. enter?";
 }
 
+Mat M{540, 540, CV_8UC3, Scalar(255,255,255)};
+void cv_print_sudoku(int x, int y)
+{//opencv 
+	M = Scalar(255,255,255);
+	circle(M, {30+60*x, 30+60*y}, 25, Scalar(0,0,0), 1);
+	for(int i=1; i<9; i++) {
+		line(M, {i * 60, 0}, {i * 60, 540}, Scalar(0,0,0), i % 3 ? 1 : 3, LINE_8);
+		line(M, {0, i * 60}, {540, i * 60}, Scalar(0,0,0), i % 3 ? 1 : 3, LINE_8);
+	}
+	for(int i=0; i<9; i++) for(int j=0; j<9; j++) {
+		if(m[i][j]) 
+			putText(M, to_string(m[i][j]), {10+60*i, 50+60*j}, FONT_HERSHEY_PLAIN, 4,
+					Q[i][j] ? Scalar(0,0,0) : toggle[i][j] ? Scalar(0,255,0) : Scalar(255,0,0), 2);
+	}
+	if(m == A) putText(M, "You solved", {50, 300}, FONT_HERSHEY_PLAIN, 5, Scalar(0,0,255), 5);
+	imshow("sudoku", M);
+}
 int main(int ac, char **av)
 {//generate sudoku problem and solve it.
 	for(int tries=1, not_solved=0; solution != 1; tries++, not_solved=0) {
@@ -157,7 +176,7 @@ int main(int ac, char **av)
 	
 	int x = 0, y = 0;
 	m = Q;
-	for(char c=' '; c != 'q'; cin >> c) {
+	for(char c; (c = waitKey()) != 'q'; ) {
 		switch(c) {
 			case 'h': if(x) x--; break;
 			case 'k': if(y) y--; break;
@@ -165,11 +184,11 @@ int main(int ac, char **av)
 			case 'l': if(x != 8) x++; break;
 			case 'd': if(!Q[x][y]) m[x][y] = 0; break;
 			case 'c': toggle_num_shape = !toggle_num_shape; break;
-			case 'm': if(m == A) { cout << "You solved!!" << endl; return 0; }
+	//		case 'm': if(m == A) { cout << "You solved!!" << endl; return 0; }
 		}
 		if(c >= '1' && c <= '9' && !Q[x][y])  
 			toggle[x][y] = toggle_num_shape, m[x][y] = c - '0';
-		print_sudoku(x, y);
+		cv_print_sudoku(x, y);
 	}
 }
 
