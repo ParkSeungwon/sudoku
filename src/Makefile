@@ -1,5 +1,5 @@
 CFLAG = -g -c -std=c++17 -fmax-errors=1
-INCLUDE = -I../
+INCLUDE = -I../ -I/usr/include/opencv
 DIR = $(notdir $(shell pwd))
 CC = g++
 OBJ = $(patsubst %.cc, ../obj/%.$(DIR).o, $(wildcard *.cc))
