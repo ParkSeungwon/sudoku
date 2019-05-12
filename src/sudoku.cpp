@@ -8,7 +8,6 @@
 #include<opencv2/opencv.hpp>
 #include"base.h"
 using namespace std;
-using namespace cv;
 
 Cmat<int, 9, 9> m, Q, A, toggle;
 int solution = 0;
@@ -111,7 +110,8 @@ void recur(int x, int y)
 	}
 }
 
-const int scale = 50;
+using namespace cv;
+const int scale = 60;
 bool toggle_num_shape = false, match = false;
 Mat M{scale*9, scale*9, CV_8UC3, {255,255,255}};
 void cv_print_sudoku(int x, int y)
