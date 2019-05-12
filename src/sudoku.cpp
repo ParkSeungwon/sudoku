@@ -141,21 +141,25 @@ void print_sudoku(int x, int y)
 		"c to toggle chinese, q to quit, m to match. enter?";
 }
 
-Mat M{540, 540, CV_8UC3, Scalar(255,255,255)};
+Mat M{540, 540, CV_8UC3, {255,255,255}};
+bool match = false;
 void cv_print_sudoku(int x, int y)
 {//opencv 
 	M = Scalar(255,255,255);
-	circle(M, {30+60*x, 30+60*y}, 25, Scalar(0,0,0), 1);
-	for(int i=1; i<9; i++) {
-		line(M, {i * 60, 0}, {i * 60, 540}, Scalar(0,0,0), i % 3 ? 1 : 3, LINE_8);
-		line(M, {0, i * 60}, {540, i * 60}, Scalar(0,0,0), i % 3 ? 1 : 3, LINE_8);
+	circle(M, {30+60*x, 30+60*y}, 25, {0,0,0}, 1);
+	for(int i=1; i<9; i++) {//draw lines
+		line(M, {i * 60, 0}, {i * 60, 540}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
+		line(M, {0, i * 60}, {540, i * 60}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
 	}
-	for(int i=0; i<9; i++) for(int j=0; j<9; j++) {
-		if(m[i][j]) 
-			putText(M, to_string(m[i][j]), {10+60*i, 50+60*j}, FONT_HERSHEY_PLAIN, 4,
-					Q[i][j] ? Scalar(0,0,0) : toggle[i][j] ? Scalar(0,255,0) : Scalar(255,0,0), 2);
+	for(int i=0; i<9; i++) for(int j=0; j<9; j++) if(Scalar color; m[i][j]) {
+		if(Q[i][j]) color = {0,0,0};
+		else if(match && A[i][j] != m[i][j]) color = {0,0,255};
+		else color = toggle[i][j] ? Scalar{0,255,0} : Scalar{255,0,0};
+		putText(M, to_string(m[i][j]), {10+60*i, 50+60*j}, FONT_HERSHEY_PLAIN, 4,
+				color, 2);
 	}
-	if(m == A) putText(M, "You solved", {50, 300}, FONT_HERSHEY_PLAIN, 5, Scalar(0,0,255), 5);
+	if(m == A)
+		putText(M, "You solved", {50, 300}, FONT_HERSHEY_PLAIN, 5, {0,120,255}, 5);
 	imshow("sudoku", M);
 }
 int main(int ac, char **av)
@@ -173,7 +177,9 @@ int main(int ac, char **av)
 		cout << "solution " << solution << '\n';
 	}
 	cout << A;
-	
+	cout << "\nhjkl to move, 1-9 to enter numbers d to delete,\n"
+		"c to toggle color, q to quit, m to match.";
+
 	int x = 0, y = 0;
 	m = Q;
 	for(char c; (c = waitKey()) != 'q'; ) {
@@ -184,8 +190,9 @@ int main(int ac, char **av)
 			case 'l': if(x != 8) x++; break;
 			case 'd': if(!Q[x][y]) m[x][y] = 0; break;
 			case 'c': toggle_num_shape = !toggle_num_shape; break;
-	//		case 'm': if(m == A) { cout << "You solved!!" << endl; return 0; }
 		}
+		if(c == 'm') match = true;
+		else match = false;
 		if(c >= '1' && c <= '9' && !Q[x][y])  
 			toggle[x][y] = toggle_num_shape, m[x][y] = c - '0';
 		cv_print_sudoku(x, y);
