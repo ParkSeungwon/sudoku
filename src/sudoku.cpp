@@ -1,3 +1,4 @@
+#include<thread>
 #include<algorithm>
 #include<tuple>
 #include<random>
@@ -110,58 +111,39 @@ void recur(int x, int y)
 	}
 }
 
-bool toggle_num_shape = false;
-void print_sudoku(int x, int y)
-{//x, y is current cursor position
-	const char *unicode[] = {"\u2780","\u2781","\u2782","\u2783","\u2784",
-		"\u2785","\u2786","\u2787","\u2788","\u2789"};
-	const char *black_circle2[] = {"\u2776", "\u2777", "\u2778", "\u2779", "\u277a",
-		"\u277b", "\u277c", "\u277d", "\u277e", "\u277f"};
-	const char *black_circle[] = {"\u278a", "\u278b", "\u278c", "\u278d", "\u278e",
-		"\u278f", "\u2790", "\u2791", "\u2792", "\u2793"}; 
-	for(int i=0; i<40; i++) cout << '\n';
-	for(int j=0; j<9; j++) {
-		if(j == 3 || j == 6) cout << "\n---+---+---";
-		cout << '\n';
-		for(int i=0; i<9; i++) {
-			if(i == 3 || i == 6) cout << '|';
-			if(!m[i][j]) {
-				if(i == x && j == y) cout << "\u25ef";
-				else cout << ' ';
-			} else if(i == x && j == y) {
-				if(!toggle[i][j]) cout << unicode[m[i][j] - 1];
-				else cout << unicode[m[i][j] - 1];
-			} else {
-				if(!toggle[i][j]) cout << m[i][j];
-				else cout << black_circle[m[i][j] - 1];
-			}
-		}
-	}
-	cout << "\nhjkl to move, d to delete,\n"
-		"c to toggle chinese, q to quit, m to match. enter?";
-}
-
-Mat M{540, 540, CV_8UC3, {255,255,255}};
-bool match = false;
+const int scale = 50;
+bool toggle_num_shape = false, match = false;
+Mat M{scale*9, scale*9, CV_8UC3, {255,255,255}};
 void cv_print_sudoku(int x, int y)
 {//opencv 
 	M = Scalar(255,255,255);
-	circle(M, {30+60*x, 30+60*y}, 25, {0,0,0}, 1);
+	circle(M, {scale/2+scale*x, scale/2+scale*y}, scale / 2 - 2, {0,0,0}, 1);
 	for(int i=1; i<9; i++) {//draw lines
-		line(M, {i * 60, 0}, {i * 60, 540}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
-		line(M, {0, i * 60}, {540, i * 60}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
+		line(M, {i * scale, 0}, {i * scale, scale*9}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
+		line(M, {0, i * scale}, {scale*9, i * scale}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
 	}
 	for(int i=0; i<9; i++) for(int j=0; j<9; j++) if(Scalar color; m[i][j]) {
 		if(Q[i][j]) color = {0,0,0};
 		else if(match && A[i][j] != m[i][j]) color = {0,0,255};
 		else color = toggle[i][j] ? Scalar{0,255,0} : Scalar{255,0,0};
-		putText(M, to_string(m[i][j]), {10+60*i, 50+60*j}, FONT_HERSHEY_PLAIN, 4,
-				color, 2);
+		putText(M, to_string(m[i][j]), {10 + scale*i, scale - 10 + scale*j},
+				FONT_HERSHEY_PLAIN, scale / 10 - 2, color, 2);
 	}
 	if(m == A)
-		putText(M, "You solved", {50, 300}, FONT_HERSHEY_PLAIN, 5, {0,120,255}, 5);
+		putText(M, "You solved", {scale, scale*5}, FONT_HERSHEY_PLAIN, scale/12, {120,120,255}, 5);
 	imshow("sudoku", M);
 }
+
+bool finished = false;
+void show_time()
+{
+	for(int i=0; !finished; i++) {
+		this_thread::sleep_for(1s);
+		cout << i/60 << "분" << i%60 << " 초 경과\r" << flush;
+	}
+	cout << endl;
+}
+
 int main(int ac, char **av)
 {//generate sudoku problem and solve it.
 	for(int tries=1, not_solved=0; solution != 1; tries++, not_solved=0) {
@@ -178,8 +160,9 @@ int main(int ac, char **av)
 	}
 	cout << A;
 	cout << "\nhjkl to move, 1-9 to enter numbers d to delete,\n"
-		"c to toggle color, q to quit, m to match.";
+		"c to toggle color, q to quit, m to match." << endl;
 
+	thread th{show_time};
 	int x = 0, y = 0;
 	m = Q;
 	for(char c; (c = waitKey()) != 'q'; ) {
@@ -190,12 +173,14 @@ int main(int ac, char **av)
 			case 'l': if(x != 8) x++; break;
 			case 'd': if(!Q[x][y]) m[x][y] = 0; break;
 			case 'c': toggle_num_shape = !toggle_num_shape; break;
+			case 'm': match = !match;
 		}
-		if(c == 'm') match = true;
-		else match = false;
 		if(c >= '1' && c <= '9' && !Q[x][y])  
 			toggle[x][y] = toggle_num_shape, m[x][y] = c - '0';
 		cv_print_sudoku(x, y);
 	}
+
+	finished = true;
+	th.join();
 }
 

@@ -1,4 +1,4 @@
-CFLAG = -g -c -std=c++17 -fmax-errors=1
+CFLAG = -g -c -std=c++17 -fmax-errors=1 
 INCLUDE = -I../ -I/usr/include/opencv
 DIR = $(notdir $(shell pwd))
 CC = g++
