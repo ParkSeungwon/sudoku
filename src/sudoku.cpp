@@ -1,10 +1,15 @@
+#include<iostream>
 #include<thread>
-#include<opencv2/opencv.hpp>
 #include"base.h"
 using namespace std;
 
-const int scale = 60;
 bool toggle_num_shape = false, match = false, finished = false;
+array<Cmat<int, 9, 9>, 2> sudokuQA();
+void print_frame(), show(), complete();
+void print_xy(int number, int x, int y, array<uint8_t, 3> rgb);
+char getkey();
+Cmat<int, 9, 9> toggle, Q, A, m;
+
 void show_time()
 {
 	for(int i=0; !finished; i++) {
@@ -14,57 +19,48 @@ void show_time()
 	cout << endl;
 }
 
-using namespace cv;
-Mat M{scale*9, scale*9, CV_8UC3, {255,255,255}};
-int x, y;
-void callback(int event, int i, int j, int, void*)
-{
-	if(event == EVENT_MOUSEMOVE) x = i/scale, y = j/scale;
+array<uint8_t, 3> get_color(int i, int j)
+{//return color according to circumstances
+	uint8_t r, g, b;
+	if(Q[i][j]) r = 0, g = 0, b = 0;
+	else if(match && A[i][j] != m[i][j]) r = 255, g = 0, b = 0;
+	else if(toggle[i][j]) r = 0, g = 255, b = 0;
+	else r = 0, g = 0, b = 255;
+	return {r, g, b};
 }
 
-using smat = Cmat<int, 9, 9>;
-smat toggle;
-void cv_print_sudoku(const smat &m, const smat &Q, const smat &A)
+void print_all()
 {//opencv 
-	M = Scalar(255,255,255);
-	for(int i=1; i<9; i++) {//draw lines
-		line(M, {i * scale, 0}, {i * scale, scale*9}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
-		line(M, {0, i * scale}, {scale*9, i * scale}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
-	}
-	for(int i=0; i<9; i++) for(int j=0; j<9; j++) if(Scalar color; m[i][j]) {
-		if(Q[i][j]) color = {0,0,0};
-		else if(match && A[i][j] != m[i][j]) color = {0,0,255};
-		else color = toggle[i][j] ? Scalar{0,255,0} : Scalar{255,0,0};
-		putText(M, to_string(m[i][j]), {10 + scale*i, scale - 10 + scale*j},
-				FONT_HERSHEY_PLAIN, scale / 10 - 2, color, 2);
-	}
-	if(m == A) {
-		putText(M, "You solved", {scale, scale*5}, FONT_HERSHEY_PLAIN, scale/12, {120,120,255}, 5);
-		finished = true;
-	}
-	imshow("sudoku", M);
+	for(int i=0; i<9; i++) for(int j=0; j<9; j++) if(m[i][j])
+		print_xy(m[i][j], i, j, get_color(i, j));
+	if(m == A) complete();
+	show();
 }
 
-array<Cmat<int, 9, 9>, 2> sudokuQA();
-
-int main(int ac, char **av)
+extern int x, y;
+int main()
 {//generate sudoku problem and solve it.
-	auto [Q, A] = sudokuQA();
-	namedWindow("sudoku");
-	setMouseCallback("sudoku", callback);
-	Cmat<int, 9, 9> m, toggle;
-	m = Q;
-	cv_print_sudoku(m, Q, A);
+	auto a = sudokuQA();
+	Q = a[0]; A = a[1]; m = Q;
+	print_frame();
+	print_all();
+	show();
 	thread th{show_time};
-	for(char c; (c = waitKey()) != 'q'; ) {
+	for(char c; (c = getkey()) != 'q'; ) {
 		switch(c) {
-			case 'd': if(!Q[x][y]) m[x][y] = 0; break;
+			case 'd': if(!Q[x][y]) m[x][y] = 0;
+					  print_xy(0, x, y, {0, 0, 0});
+					  show();
+					  break;
 			case 'c': toggle_num_shape = !toggle_num_shape; break;
-			case 'm': match = !match;
+			case 'm': match = !match, print_all(), show();
 		}
-		if(c >= '1' && c <= '9' && !Q[x][y])  
+		if(c >= '1' && c <= '9' && !Q[x][y]) { 
 			toggle[x][y] = toggle_num_shape, m[x][y] = c - '0';
-		cv_print_sudoku(m, Q, A);
+			print_xy(m[x][y], x, y, get_color(x, y));
+			if(m == A) complete();
+			show();
+		}
 	}
 	finished = true;
 	th.join();
