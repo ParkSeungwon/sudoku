@@ -110,14 +110,27 @@ void recur(int x, int y)
 	}
 }
 
-using namespace cv;
 const int scale = 60;
 bool toggle_num_shape = false, match = false, finished = false;
+void show_time()
+{
+	for(int i=0; !finished; i++) {
+		this_thread::sleep_for(1s);
+		cout << i/60 << "분" << i%60 << "초 경과\r" << flush;
+	}
+	cout << endl;
+}
+
+using namespace cv;
 Mat M{scale*9, scale*9, CV_8UC3, {255,255,255}};
-void cv_print_sudoku(int x, int y)
+int x, y;
+void callback(int event, int i, int j, int, void*)
+{
+	if(event == EVENT_MOUSEMOVE) x = i/scale, y = j/scale;
+}
+void cv_print_sudoku()
 {//opencv 
 	M = Scalar(255,255,255);
-	circle(M, {scale/2+scale*x, scale/2+scale*y}, scale / 2 - 2, {0,0,0}, 1);
 	for(int i=1; i<9; i++) {//draw lines
 		line(M, {i * scale, 0}, {i * scale, scale*9}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
 		line(M, {0, i * scale}, {scale*9, i * scale}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
@@ -136,15 +149,6 @@ void cv_print_sudoku(int x, int y)
 	imshow("sudoku", M);
 }
 
-void show_time()
-{
-	for(int i=0; !finished; i++) {
-		this_thread::sleep_for(1s);
-		cout << i/60 << "분" << i%60 << "초 경과\r" << flush;
-	}
-	cout << endl;
-}
-
 int main(int ac, char **av)
 {//generate sudoku problem and solve it.
 	for(int tries=1, not_solved=0; solution != 1; tries++, not_solved=0) {
@@ -160,27 +164,24 @@ int main(int ac, char **av)
 		cout << "solution " << solution << '\n';
 	}
 	cout << A;
-	cout << "\nhjkl to move, 1-9 to enter numbers d to delete,\n"
+	cout << "\n1-9 to enter numbers d to delete,\n"
 		"c to toggle color, q to quit, m to match." << endl;
 
-	thread th{show_time};
-	int x = 0, y = 0;
+	namedWindow("sudoku");
+	setMouseCallback("sudoku", callback);
 	m = Q;
+	cv_print_sudoku();
+	thread th{show_time};
 	for(char c; (c = waitKey()) != 'q'; ) {
 		switch(c) {
-			case 'h': if(x) x--; break;
-			case 'k': if(y) y--; break;
-			case 'j': if(y != 8) y++; break;
-			case 'l': if(x != 8) x++; break;
 			case 'd': if(!Q[x][y]) m[x][y] = 0; break;
 			case 'c': toggle_num_shape = !toggle_num_shape; break;
 			case 'm': match = !match;
 		}
 		if(c >= '1' && c <= '9' && !Q[x][y])  
 			toggle[x][y] = toggle_num_shape, m[x][y] = c - '0';
-		cv_print_sudoku(x, y);
+		cv_print_sudoku();
 	}
-
 	finished = true;
 	th.join();
 }
