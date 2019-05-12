@@ -9,7 +9,7 @@
 #include"base.h"
 using namespace std;
 
-Cmat<int, 9, 9> m, Q, A, toggle;
+Cmat<int, 9, 9> m, Q, A, toggle;//Q question, A answer
 int solution = 0;
 
 vector<int> possible(int x, int y)
@@ -112,7 +112,7 @@ void recur(int x, int y)
 
 using namespace cv;
 const int scale = 60;
-bool toggle_num_shape = false, match = false;
+bool toggle_num_shape = false, match = false, finished = false;
 Mat M{scale*9, scale*9, CV_8UC3, {255,255,255}};
 void cv_print_sudoku(int x, int y)
 {//opencv 
@@ -129,17 +129,18 @@ void cv_print_sudoku(int x, int y)
 		putText(M, to_string(m[i][j]), {10 + scale*i, scale - 10 + scale*j},
 				FONT_HERSHEY_PLAIN, scale / 10 - 2, color, 2);
 	}
-	if(m == A)
+	if(m == A) {
 		putText(M, "You solved", {scale, scale*5}, FONT_HERSHEY_PLAIN, scale/12, {120,120,255}, 5);
+		finished = true;
+	}
 	imshow("sudoku", M);
 }
 
-bool finished = false;
 void show_time()
 {
 	for(int i=0; !finished; i++) {
 		this_thread::sleep_for(1s);
-		cout << i/60 << "분" << i%60 << " 초 경과\r" << flush;
+		cout << i/60 << "분" << i%60 << "초 경과\r" << flush;
 	}
 	cout << endl;
 }
