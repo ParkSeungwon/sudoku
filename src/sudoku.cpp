@@ -3,12 +3,12 @@
 #include"base.h"
 using namespace std;
 
-bool toggle_num_shape = false, match = false, finished = false;
 array<Cmat<int, 9, 9>, 2> sudokuQA();
 void print_frame(), show(), complete();
 void print_xy(int number, int x, int y, array<uint8_t, 3> rgb);
 char getkey();
 Cmat<int, 9, 9> toggle, Q, A, m;
+bool finished = false, toggle_color = false, match = false;
 
 void show_time()
 {
@@ -18,16 +18,14 @@ void show_time()
 	}
 	cout << endl;
 }
-
 array<uint8_t, 3> get_color(int i, int j)
-{//return color according to circumstances
-	uint8_t r, g, b;
-	if(Q[i][j]) r = 0, g = 0, b = 0;
-	else if(match && A[i][j] != m[i][j]) r = 255, g = 0, b = 0;
-	else if(toggle[i][j]) r = 0, g = 255, b = 0;
-	else r = 0, g = 0, b = 255;
-	return {r, g, b};
+{//return rgb color according to circumstances
+	if(Q[i][j]) return {0,0,0};
+	if(match && A[i][j] != m[i][j]) return {255,0,0};
+	if(toggle[i][j]) return {0,255,0};
+	return {0,0, 255};
 }
+
 
 void print_all()
 {//opencv 
@@ -37,14 +35,13 @@ void print_all()
 	show();
 }
 
-extern int x, y;
 int main()
 {//generate sudoku problem and solve it.
-	auto a = sudokuQA();
-	Q = a[0]; A = a[1]; m = Q;
+	extern int x, y;
+	auto [q, a] = sudokuQA();
+	m = Q = move(q); A = move(a);
 	print_frame();
 	print_all();
-	show();
 	thread th{show_time};
 	for(char c; (c = getkey()) != 'q'; ) {
 		switch(c) {
@@ -52,13 +49,15 @@ int main()
 					  print_xy(0, x, y, {0, 0, 0});
 					  show();
 					  break;
-			case 'c': toggle_num_shape = !toggle_num_shape; break;
-			case 'm': match = !match, print_all(), show();
+			case 'c': toggle_color = !toggle_color; break;
+			case 'm': match = !match;
+					  print_all();
 		}
 		if(c >= '1' && c <= '9' && !Q[x][y]) { 
-			toggle[x][y] = toggle_num_shape, m[x][y] = c - '0';
+			toggle[x][y] = toggle_color;
+			m[x][y] = c - '0';
 			print_xy(m[x][y], x, y, get_color(x, y));
-			if(m == A) complete();
+			if(m == A) complete(), finished = true;
 			show();
 		}
 	}

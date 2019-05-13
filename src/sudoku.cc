@@ -8,8 +8,8 @@
 #include"base.h"
 using namespace std;
 
-namespace {
-//anonymous namespace == static declaration
+namespace
+{ //anonymous namespace == static declaration
 Cmat<int, 9, 9> m, A;
 int solution = 0;
 
@@ -59,7 +59,7 @@ int evident(int x1, int x2, int y1, int y2)//vertical, horizontal, 3x3 exclusive
 	}
 	for(auto [num, freq] : numNfreq) if(freq == 1) {
 		for(const auto &[x, y, v] : vv) 
-			if(find(v.begin(), v.end(), num) != v.end()) m[x][y] = num;
+			if(find(v.begin(), v.end(), num) != v.end()) m[x][y] = num;//to find x,y
 		r++;
 	}
 	for(int i=1; i<10; i++) 
@@ -112,6 +112,9 @@ void recur(int x, int y)
 }
 
 }
+
+
+
 
 array<Cmat<int, 9, 9>, 2> sudokuQA() 
 {//return made sudoku Question and Answer

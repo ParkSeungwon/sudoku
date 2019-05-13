@@ -34,19 +34,19 @@ void print_frame()
 
 void print_xy(int number, int x, int y, array<uint8_t, 3> rgb)
 {
-	auto [r,g,b] = rgb;
 	const int border = 3;
 	Rect rt{x*scale + border, y*scale + border, scale - border*2, scale - border*2};
 	auto roi = M(rt);
 	roi = Scalar{255,255,255};
-	if(number) 
+	if(auto [r, g, b] = rgb; number) 
 		putText(roi, to_string(number), {border + 5 , scale - border -5},
 				FONT_HERSHEY_PLAIN, scale / 10 - 2, {b, g, r}, 2);
 }
 
 void complete()
 {
-	putText(M, "You solved", {scale, scale*5}, FONT_HERSHEY_PLAIN, scale/12, {120,120,255}, 5);
+	putText(M, "You solved", {scale, scale*5}, FONT_HERSHEY_PLAIN, 
+			scale/12, {255,223,0}, 5);
 }
 void show() 
 {
