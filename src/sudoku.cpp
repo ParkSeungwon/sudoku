@@ -6,21 +6,21 @@
 #include<map>
 #include<vector>
 #include<opencv2/opencv.hpp>
-#include"base.h"
 using namespace std;
+using namespace cv;
 
-Cmat<int, 9, 9> m, Q, A, toggle;//Q question, A answer
+Mat_<int> m(9,9), Q(9,9), A(9,9), toggle(9,9);//Q question, A answer
 int solution = 0;
 
 vector<int> possible(int x, int y)
 {//return possible numbers at x, y
 	int tmp = m[x][y]; m[x][y] = 0;
 	bool exist[10] = {false, };
-	for(int i=0; i<9; i++) exist[m[i][y]] = true;
-	for(int i=0; i<9; i++) exist[m[x][i]] = true;
+	for(int i=0; i<9; i++) exist[m.at<int>(i,y)] = true;
+	for(int i=0; i<9; i++) exist[m.at<int>(x,i)] = true;
 	for(int i=0; i<3; i++) for(int j=0; j<3; j++)
 		exist[m[x/3*3 + i][y/3*3 + j]] = true;
-	m[x][y] = tmp;
+	m.at<int>(x,y) = tmp;
 
 	vector<int> v;
 	for(int i=1; i<10; i++) if(!exist[i]) v.push_back(i);
@@ -31,13 +31,13 @@ void init()
 {//distribute numbers on board randomly
 	uniform_int_distribution<int> di1{1, 9}, di2{0, 2};
 	random_device rd;
-	m.O();
+	m = 0;
 	for(int i=0, n=10; i<9; i++) for(int j=0; j<9; j++) if(!di2(rd)) {//init
 		auto v = possible(i, j);
-		if(!v.size()) m.O(), i = 0, j = 0;//same as restarting
+		if(!v.size()) m = 0, i = 0, j = 0;//same as restarting
 		else {
 			while(n > v.size() - 1) n = di1(rd) - 1;
-			m[i][j] = v[n];
+			m.at<int>(i,j) = v[n];
 		}
 		n = 10;
 	}
@@ -50,15 +50,15 @@ int evident(int x1, int x2, int y1, int y2)//vertical, horizontal, 3x3 exclusive
 	vector<int> vn;//numbers already solved and given
 	int r = 0;
 	for(int i=x1; i<=x2; i++) for(int j=y1; j<=y2; j++) {
-		if(!m[i][j]) {
+		if(!m.at<int>(i,j)) {
 			auto v = possible(i, j);
 			vv.push_back({i, j, v});
 			for(int n : v) numNfreq[n]++;
-		} else vn.push_back(m[i][j]);
+		} else vn.push_back(m.at<int>(i,j));
 	}
 	for(auto [num, freq] : numNfreq) if(freq == 1) {
 		for(const auto &[x, y, v] : vv) 
-			if(find(v.begin(), v.end(), num) != v.end()) m[x][y] = num;
+			if(find(v.begin(), v.end(), num) != v.end()) m.at<int>(x,y) = num;
 		r++;
 	}
 	for(int i=1; i<10; i++) 
@@ -71,7 +71,7 @@ bool evident_solve()
 	do {
 		filled = 0;
 		for(int i=0; i<9; i++) for(int j=0; j<9; j++) {
-			if(!m[i][j]) {
+			if(!m.at<int>(i,j)) {
 				auto v = possible(i, j);
 				if(v.empty()) return false;
 				if(v.size() == 1) m[i][j] = v[0], filled++;
@@ -96,14 +96,14 @@ void recur(int x, int y)
 	if(x == 9) {//recalculate x,y border
 		if(y == 8) {
 			solution++;
-			A = m;
+			m.copyTo(A);
 			return;
 		} else x = 0, y++;
 	}
-	if(m[x][y]) recur(x + 1, y);
+	if(m.at<int>(x,y)) recur(x + 1, y);
 	else {
 		for(int i : possible(x, y)) {
-			m[x][y] = i;
+			m.at<int>(x,y) = i;
 			recur(x + 1, y);
 		}
 		m[x][y] = 0;
@@ -135,14 +135,14 @@ void cv_print_sudoku()
 		line(M, {i * scale, 0}, {i * scale, scale*9}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
 		line(M, {0, i * scale}, {scale*9, i * scale}, {0,0,0}, i % 3 ? 1 : 3, LINE_8);
 	}
-	for(int i=0; i<9; i++) for(int j=0; j<9; j++) if(Scalar color; m[i][j]) {
-		if(Q[i][j]) color = {0,0,0};
-		else if(match && A[i][j] != m[i][j]) color = {0,0,255};
-		else color = toggle[i][j] ? Scalar{0,255,0} : Scalar{255,0,0};
-		putText(M, to_string(m[i][j]), {10 + scale*i, scale - 10 + scale*j},
+	for(int i=0; i<9; i++) for(int j=0; j<9; j++) if(Scalar color; m.at<int>(i,j)) {
+		if(Q.at<int>(i,j)) color = {0,0,0};
+		else if(match && A.at<int>(i,j) != m.at<int>(i,j)) color = {0,0,255};
+		else color = toggle.at<int>(i,j) ? Scalar{0,255,0} : Scalar{255,0,0};
+		putText(M, to_string(m.at<int>(i,j)), {10 + scale*i, scale - 10 + scale*j},
 				FONT_HERSHEY_PLAIN, scale / 10 - 2, color, 2);
 	}
-	if(m == A) {
+	if(!countNonZero(m != A)) {
 		putText(M, "You solved", {scale, scale*5}, FONT_HERSHEY_PLAIN, scale/12, {120,120,255}, 5);
 		finished = true;
 	}
@@ -152,12 +152,12 @@ void cv_print_sudoku()
 int main(int ac, char **av)
 {//generate sudoku problem and solve it.
 	for(int tries=1, not_solved=0; solution != 1; tries++, not_solved=0) {
-		init(); solution = 0; Q = m; 
+		init(); solution = 0;  m.copyTo(Q); 
 		cout << "trying " << tries << '\n' << Q;
 
 		if(!evident_solve()) continue;
 		cout << "evident" << '\n' << m;
-		for(int i=0; i<9; i++) for(int j=0; j<9; j++) if(!m[i][j]) not_solved++;
+		for(int i=0; i<9; i++) for(int j=0; j<9; j++) if(!m.at<int>(i,j)) not_solved++;
 		if(not_solved > 50) continue;//take too much time for brute force
 		
 		recur(0, 0);//brute force
@@ -169,17 +169,17 @@ int main(int ac, char **av)
 
 	namedWindow("sudoku");
 	setMouseCallback("sudoku", callback);
-	m = Q;
+	Q.copyTo(m);
 	cv_print_sudoku();
 	thread th{show_time};
 	for(char c; (c = waitKey()) != 'q'; ) {
 		switch(c) {
-			case 'd': if(!Q[x][y]) m[x][y] = 0; break;
+			case 'd': if(!Q.at<int>(x,y)) m.at<int>(x,y) = 0; break;
 			case 'c': toggle_num_shape = !toggle_num_shape; break;
 			case 'm': match = !match;
 		}
-		if(c >= '1' && c <= '9' && !Q[x][y])  
-			toggle[x][y] = toggle_num_shape, m[x][y] = c - '0';
+		if(c >= '1' && c <= '9' && !Q.at<int>(x,y))  
+			toggle.at<int>(x,y) = toggle_num_shape, m.at<int>(x,y) = c - '0';
 		cv_print_sudoku();
 	}
 	finished = true;
