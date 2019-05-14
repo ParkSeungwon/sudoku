@@ -14,7 +14,7 @@ int solution = 0;
 
 vector<int> possible(int x, int y)
 {//return possible numbers at x, y
-	int tmp = m[x][y]; m[x][y] = 0;
+	int tmp = m.at<int>(x,y); m.at<int>(x,y) = 0;
 	bool exist[10] = {false, };
 	for(int i=0; i<9; i++) exist[m.at<int>(i,y)] = true;
 	for(int i=0; i<9; i++) exist[m.at<int>(x,i)] = true;
