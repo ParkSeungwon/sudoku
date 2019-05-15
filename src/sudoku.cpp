@@ -106,7 +106,7 @@ void recur(int x, int y)
 			m.at<int>(x,y) = i;
 			recur(x + 1, y);
 		}
-		m[x][y] = 0;
+		m.at<int>(x,y) = 0;
 	}
 }
 
@@ -121,7 +121,6 @@ void show_time()
 	cout << endl;
 }
 
-using namespace cv;
 Mat M{scale*9, scale*9, CV_8UC3, {255,255,255}};
 int x, y;
 void callback(int event, int i, int j, int, void*)
@@ -142,7 +141,7 @@ void cv_print_sudoku()
 		putText(M, to_string(m.at<int>(i,j)), {10 + scale*i, scale - 10 + scale*j},
 				FONT_HERSHEY_PLAIN, scale / 10 - 2, color, 2);
 	}
-	if(!countNonZero(m != A)) {
+	if(!countNonZero(m != A)) {//m == A
 		putText(M, "You solved", {scale, scale*5}, FONT_HERSHEY_PLAIN, scale/12, {120,120,255}, 5);
 		finished = true;
 	}
@@ -153,17 +152,18 @@ int main(int ac, char **av)
 {//generate sudoku problem and solve it.
 	for(int tries=1, not_solved=0; solution != 1; tries++, not_solved=0) {
 		init(); solution = 0;  m.copyTo(Q); 
-		cout << "trying " << tries << '\n' << Q;
+		cout << "trying " << tries << '\n' << Q << '\n';
 
 		if(!evident_solve()) continue;
-		cout << "evident" << '\n' << m;
-		for(int i=0; i<9; i++) for(int j=0; j<9; j++) if(!m.at<int>(i,j)) not_solved++;
+		cout << "evident" << '\n' << m << '\n';
+		for(int i=0; i<9; i++) for(int j=0; j<9; j++)
+			if(!m.at<int>(i,j)) not_solved++;
 		if(not_solved > 50) continue;//take too much time for brute force
 		
 		recur(0, 0);//brute force
 		cout << "solution " << solution << '\n';
 	}
-	cout << A;
+	cout << A << '\n';
 	cout << "\n1-9 to enter numbers d to delete,\n"
 		"c to toggle color, q to quit, m to match." << endl;
 
