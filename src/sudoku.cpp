@@ -12,19 +12,17 @@ using namespace cv;
 Mat_<int> m(9,9), Q(9,9), A(9,9), toggle(9,9);//Q question, A answer
 int solution = 0;
 
-vector<int> possible(int x, int y)
+array<int, 10> possible(int x, int y)
 {//return possible numbers at x, y
 	int tmp = m.at<int>(x,y); m.at<int>(x,y) = 0;
-	bool exist[10] = {false, };
+	array<bool, 10> exist = {false, };
 	for(int i=0; i<9; i++) exist[m.at<int>(i,y)] = true;
 	for(int i=0; i<9; i++) exist[m.at<int>(x,i)] = true;
 	for(int i=0; i<3; i++) for(int j=0; j<3; j++)
 		exist[m[x/3*3 + i][y/3*3 + j]] = true;
 	m.at<int>(x,y) = tmp;
 
-	vector<int> v;
-	for(int i=1; i<10; i++) if(!exist[i]) v.push_back(i);
-	return v;
+	return exist;
 }
 
 void init() 
@@ -33,8 +31,8 @@ void init()
 	random_device rd;
 	m = 0;
 	for(int i=0, n=10; i<9; i++) for(int j=0; j<9; j++) if(!di2(rd)) {//init
-		auto v = possible(i, j);
-		if(!v.size()) m = 0, i = 0, j = 0;//same as restarting
+		auto v = possible(i, j);//v same as restarting
+		if(!count(v.begin() + 1, v.end(), false)) m = 0, i = 0, j = 0;
 		else {
 			while(n > v.size() - 1) n = di1(rd) - 1;
 			m.at<int>(i,j) = v[n];
