@@ -37,3 +37,4 @@ find
 .
 -size
 +3M
+obj/catch.tx
