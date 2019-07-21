@@ -38,3 +38,4 @@ find
 -size
 +3M
 obj/catch.tx
+obj/catch.tx
