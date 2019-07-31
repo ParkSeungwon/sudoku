@@ -23,6 +23,7 @@ vector<int> possible(int x, int y)
 	m.at<int>(x,y) = tmp;
 
 	vector<int> v;
+	v.reserve(9);
 	for(int i=1; i<10; i++) if(!exist[i]) v.push_back(i);
 	return v;
 }
@@ -152,18 +153,17 @@ int main(int ac, char **av)
 {//generate sudoku problem and solve it.
 	for(int tries=1, not_solved=0; solution != 1; tries++, not_solved=0) {
 		init(); solution = 0;  m.copyTo(Q); 
-		cout << "trying " << tries << '\n' << Q << '\n';
+//		cout << "trying " << tries << '\n' << Q.t() << '\n';
 
 		if(!evident_solve()) continue;
-		cout << "evident" << '\n' << m << '\n';
+//		cout << "evident" << '\n' << m.t() << '\n';
 		for(int i=0; i<9; i++) for(int j=0; j<9; j++)
 			if(!m.at<int>(i,j)) not_solved++;
 		if(not_solved > 50) continue;//take too much time for brute force
 		
 		recur(0, 0);//brute force
-		cout << "solution " << solution << '\n';
+//		cout << "solution " << solution << '\n';
 	}
-	cout << A << '\n';
 	cout << "\n1-9 to enter numbers d to delete,\n"
 		"c to toggle color, q to quit, m to match." << endl;
 
@@ -183,6 +183,7 @@ int main(int ac, char **av)
 		cv_print_sudoku();
 	}
 	finished = true;
+	cout << Q.t() << '\n' << A.t() << '\n';
 	th.join();
 }
 
