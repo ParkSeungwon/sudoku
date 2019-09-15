@@ -9,7 +9,7 @@
 using namespace std;
 using namespace cv;
 
-Mat_<int> m(9,9), Q(9,9), A(9,9), toggle(9,9);//Q question, A answer
+Mat_<int> m(9,9), Q(9,9), A(9,9), toggle(9,9), E(9,9);//Q question, A answer
 int solution = 0;
 
 vector<int> possible(int x, int y)
@@ -160,11 +160,11 @@ int main(int ac, char **av)
 		for(int i=0; i<9; i++) for(int j=0; j<9; j++)
 			if(!m.at<int>(i,j)) not_solved++;
 		if(not_solved > 50) continue;//take too much time for brute force
-		
+		m.copyTo(E);
 		recur(0, 0);//brute force
 //		cout << "solution " << solution << '\n';
 	}
-	cout << "\n1-9 to enter numbers d to delete,\n"
+	cout << "\n1-9 to enter numbers d to delete,\nv to show answer, "
 		"c to toggle color, q to quit, m to match." << endl;
 
 	namedWindow("sudoku");
@@ -176,14 +176,14 @@ int main(int ac, char **av)
 		switch(c) {
 			case 'd': if(!Q.at<int>(x,y)) m.at<int>(x,y) = 0; break;
 			case 'c': toggle_num_shape = !toggle_num_shape; break;
-			case 'm': match = !match;
+			case 'm': match = !match; break;
+			case 'v': cout << Q.t() << '\n' << E.t() << '\n' << A.t() << '\n';
 		}
 		if(c >= '1' && c <= '9' && !Q.at<int>(x,y))  
 			toggle.at<int>(x,y) = toggle_num_shape, m.at<int>(x,y) = c - '0';
 		cv_print_sudoku();
 	}
 	finished = true;
-	cout << Q.t() << '\n' << A.t() << '\n';
 	th.join();
 }
 
