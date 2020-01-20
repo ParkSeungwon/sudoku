@@ -36,9 +36,7 @@ bool Snake::move()
 		board.at<char>(body_.back()) = ' ';
 		body_.pop_back();//no fruit
 	} 
-	if(p.x <= 0 || p.y <= 0 || p.x >= board.cols-1 || p.y >= board.rows-1)
-		return false;
-	for(const auto &a : body_) if(p == a) return false;
+	if(board.at<char>(p) == '#' || board.at<char>(p) == 'O') return false;
 	board.at<char>(p) = 'O';
 	body_.push_front(p);
 	return true;
@@ -57,7 +55,7 @@ void generate_fruit()
 	random_device rd;
 	while(!game_end) {
 		int x = di_x(rd), y = di_y(rd);
-		this_thread::sleep_for(3s);
+		this_thread::sleep_for(2s);
 		if(board.at<char>(y, x) == ' ') board.at<char>(y, x) = 'f';
 	}
 }
@@ -79,7 +77,7 @@ int main()
 	View screen;
 	Snake snake;
 	while(1) {
-		if(int c = waitKey(100); c == 'q') break;
+		if(int c = waitKey(50); c == 'q') break;
 		else if(c > 80 && c < 85) snake.direction(c); 
 		else if(!snake.move()) break;
 		screen.show();
