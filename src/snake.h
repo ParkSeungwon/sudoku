@@ -13,6 +13,7 @@ class View : public cv::Mat
 public:
 	View();
 	void show();
+	void show2();
 
 protected:
 	static const int zoom_scale_ = 20;
@@ -23,6 +24,7 @@ class Snake
 public:
 	bool move();
 	void direction(int d);
+	void score();
 
 protected:
 	int direction_ = RIGHT;

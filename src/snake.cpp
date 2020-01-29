@@ -23,6 +23,15 @@ void View::show()
 	imshow("game", *this);
 }
 
+void View::show2()
+{
+	for(int i=0; i<50; i++) cout << '\n';
+	for(int y = 0; y < board.rows; y++) {
+		for(int x = 0; x < board.cols; x++) cout << board.at<char>(y, x);
+		cout << '\n';
+	}
+}
+
 bool Snake::move()
 {//if false : dead
 	auto p = body_.front();
@@ -45,6 +54,11 @@ bool Snake::move()
 void Snake::direction(int d)
 {
 	direction_ = d;
+}
+
+void Snake::score() 
+{
+	cout << "score : "<< body_.size() << endl;
 }
 
 bool game_end = false;
@@ -83,5 +97,6 @@ int main()
 		screen.show();
 	}
 	game_end = true;
+	snake.score();
 	th.join();
 }
