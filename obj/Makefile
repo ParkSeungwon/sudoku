@@ -2,7 +2,7 @@ CC = g++
 OBJ = $(wildcard *.o)
 EXE = $(patsubst %.x, ../%.x, $(wildcard *.x))
 TST = $(wildcard %.tst.o)
-LIBS = $(shell pkg-config opencv --libs) -lpthread
+LIBS = $(shell pkg-config opencv4 --libs) -lpthread
 
 all : $(EXE) ../catch.x
 
